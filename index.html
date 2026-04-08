@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognify-ui | Бесплатная нейросеть</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #a8c0ff 0%, #3f2b63 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .nav {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .nav a {
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        
+        .nav a:hover {
+            color: white;
+        }
+        
+        .btn-logout {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* Chat */
+        .chat-container {
+            background: rgba(255,255,255,0.05);
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            justify-content: flex-end;
+        }
+        
+        .message.bot {
+            justify-content: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        
+        .user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-bottom-right-radius: 5px;
+        }
+        
+        .bot .message-content {
+            background: rgba(255,255,255,0.1);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .input-area {
+            display: flex;
+            gap: 12px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        textarea {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 12px 20px;
+            color: white;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+        }
+        
+        textarea::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 24px;
+            padding: 0 28px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.02);
+        }
+        
+        /* Info panel */
+        .info-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+        
+        .info-card .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        /* API Selector */
+        .api-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 0 20px;
+        }
+        
+        .api-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .api-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🧠 Cognify-ui</div>
+            <div class="nav">
+                <a href="#" onclick="showHistory()">📜 История</a>
+                <a href="#" onclick="showStats()">📊 Статистика</a>
+                <button class="btn-logout" onclick="logout()">🚪 Выйти</button>
+            </div>
+        </div>
+        
+        <div class="info-panel" id="infoPanel">
+            <div class="info-card">
+                <h3>Сегодня использовано</h3>
+                <div class="value" id="usedCount">0</div>
+                <small>/20 запросов</small>
+            </div>
+            <div class="info-card">
+                <h3>Всего запросов</h3>
+                <div class="value" id="totalCount">0</div>
+            </div>
+            <div class="info-card">
+                <h3>Статус</h3>
+                <div class="value" id="status">🟢 Бесплатно</div>
+            </div>
+        </div>
+        
+        <div class="api-selector" id="apiSelector">
+            <button class="api-btn active" data-api="groq">🚀 Groq (быстрый)</button>
+            <button class="api-btn" data-api="cloudflare">☁️ Cloudflare AI</button>
+            <button class="api-btn" data-api="fallback">🔄 Fallback (всегда работает)</button>
+        </div>
+        
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message bot">
+                    <div class="message-content">
+                        👋 Привет! Я Cognify — твой бесплатный AI помощник.<br>
+                        У тебя 20 бесплатных запросов в день.<br>
+                        Задай любой вопрос! ✨
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <textarea id="userInput" placeholder="Напиши свой вопрос..." rows="1"></textarea>
+                <button id="sendBtn">➤ Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApi = 'groq';
+        let token = localStorage.getItem('token');
+        let username = localStorage.getItem('username');
+        
+        // Проверка авторизации
+        if (!token) {
+            window.location.href = '/login.html';
+        }
+        
+        // Загрузка лимитов
+        async function loadLimits() {
+            const response = await fetch('https://cognify-backend.твой-аккаунт.workers.dev/api/limits', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            document.getElementById('usedCount').innerText = data.used || 0;
+            document.getElementById('totalCount').innerText = localStorage.getItem('totalRequests') || 0;
+        }
+        
+        // Загрузка статистики
+        async function loadStats() {
+            const response = await fetch('https://cognify-backend.твой-аккаунт.workers.dev/api/stats', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            alert(`📊 Статистика:\nВсего запросов: ${data.totalRequests || 0}\nСегодня: ${data.todayRequests || 0}\nВ истории: ${data.historyLength || 0} сообщений`);
+        }
+        
+        // Показать историю
+        async function showHistory() {
+            const response = await fetch('https://cognify-backend.твой-аккаунт.workers.dev/api/history', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            if (data.history && data.history.length > 0) {
+                for (let msg of data.history) {
+                    const isUser = msg.role === 'user';
+                    addMessage(msg.content, isUser);
+                }
+            } else {
+                addMessage("История пуста. Задай первый вопрос!", false);
+            }
+        }
+        
+        function showStats() {
+            loadStats();
+        }
+        
+        function addMessage(text, isUser) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const question = input.value.trim();
+            if (!question) return;
+            
+            addMessage(question, true);
+            input.value = '';
+            input.style.height = 'auto';
+            
+            // Показываем загрузку
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot';
+            loadingDiv.id = 'loadingMsg';
+            loadingDiv.innerHTML = `<div class="message-content"><div class="loading"></div> Думаю...</div>`;
+            document.getElementById('messages').appendChild(loadingDiv);
+            
+            try {
+                const response = await fetch('https://cognify-backend.твой-аккаунт.workers.dev/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message: question, api: currentApi })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loadingMsg')?.remove();
+                
+                if (data.error) {
+                    addMessage(`❌ ${data.error}`, false);
+                } else {
+                    addMessage(data.answer, false);
+                    // Обновляем счетчик
+                    if (data.remaining !== undefined) {
+                        document.getElementById('usedCount').innerText = 20 - data.remaining;
+                        let total = parseInt(localStorage.getItem('totalRequests') || '0');
+                        localStorage.setItem('totalRequests', total + 1);
+                        document.getElementById('totalCount').innerText = total + 1;
+                    }
+                }
+            } catch (error) {
+                document.getElementById('loadingMsg')?.remove();
+                addMessage(`❌ Ошибка: ${error.message}`, false);
+            }
+        }
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+        
+        // Выбор API
+        document.querySelectorAll('.api-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.api-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentApi = btn.dataset.api;
+                addMessage(`🔄 Переключено на ${btn.innerText}`, false);
+            });
+        });
+        
+        // Отправка
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Загрузка лимитов
+        loadLimits();
+    </script>
+</body>
+</html>
