@@ -496,6 +496,39 @@
         
         .header-left { display: flex; align-items: center; gap: 12px; }
         .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+		        /* Кнопка копирования */
+        .copy-btn {
+            opacity: 0;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            margin-left: 8px;
+        }
+        
+        .message:hover .copy-btn {
+            opacity: 1;
+        }
+        
+        .copy-btn:hover {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        .message-content-wrapper {
+            display: flex;
+            align-items: flex-start;
+            gap: 4px;
+            flex: 1;
+        }
+        
+        .message-text {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -828,11 +861,26 @@
             });
         }
         
-        function addMessageToUI(text, isUser) {
+                function addMessageToUI(text, isUser) {
             const messagesArea = document.getElementById('messagesArea');
             const div = document.createElement('div');
             div.className = `message ${isUser ? 'user' : 'bot'}`;
-            div.innerHTML = `<div class="message-avatar">${isUser ? '👤' : '🧠'}</div><div class="message-content">${formatMessage(text)}</div>`;
+            
+            if (isUser) {
+                // Сообщение пользователя (без кнопки копирования)
+                div.innerHTML = `<div class="message-avatar">👤</div><div class="message-content">${formatMessage(text)}</div>`;
+            } else {
+                // Сообщение бота (с кнопкой копирования)
+                const messageId = 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 8);
+                div.innerHTML = `
+                    <div class="message-avatar">🧠</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-text" id="${messageId}">${formatMessage(text)}</div>
+                        <button class="copy-btn" onclick="copyMessageText('${messageId}')" title="Копировать ответ">📋</button>
+                    </div>
+                `;
+            }
+            
             messagesArea.appendChild(div);
             messagesArea.scrollTop = messagesArea.scrollHeight;
         }
@@ -1097,6 +1145,42 @@
                 showToast('❌ Не удалось скопировать', true);
             }
             
+            document.body.removeChild(textarea);
+			        // Копирование текста сообщения
+        function copyMessageText(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            // Получаем чистый текст без HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = element.innerHTML;
+            const textToCopy = tempDiv.textContent || tempDiv.innerText;
+            
+            // Копируем
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast('📋 Ответ скопирован!');
+                }).catch(() => {
+                    copyTextFallback(textToCopy);
+                });
+            } else {
+                copyTextFallback(textToCopy);
+            }
+        }
+        
+        function copyTextFallback(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.top = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('📋 Ответ скопирован!');
+            } catch (err) {
+                showToast('❌ Не удалось скопировать', true);
+            }
             document.body.removeChild(textarea);
         }        // ============================================
         // UI СОБЫТИЯ
