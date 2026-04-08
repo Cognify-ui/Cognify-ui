@@ -94,7 +94,7 @@
         <h1>🧠 Регистрация</h1>
         <div id="message"></div>
         <input type="text" id="username" placeholder="Имя пользователя">
-        <input type="password" id="password" placeholder="Пароль (мин. 6 символов)">
+        <input type="password" id="password" placeholder="Пароль (мин. 4 символа)">
         <button onclick="register()">Создать аккаунт</button>
         <div class="link">
             Уже есть аккаунт? <a href="/login.html">Войти</a>
@@ -102,37 +102,6 @@
     </div>
     
     <script>
-        const WORKER_URL = 'https://cognify-backend.твой-аккаунт.workers.dev';
-        
-        async function register() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            
-            if (password.length < 6) {
-                showMessage('Пароль должен быть минимум 6 символов', 'error');
-                return;
-            }
-            
-            const response = await fetch(`${WORKER_URL}/api/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                showMessage(data.error, 'error');
-            } else {
-                showMessage('Регистрация успешна! Перенаправление...', 'success');
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('username', data.username);
-                setTimeout(() => {
-                    window.location.href = '/index.html';
-                }, 1500);
-            }
-        }
-        
         function showMessage(msg, type) {
             const div = document.getElementById('message');
             div.className = type;
@@ -140,12 +109,36 @@
             div.style.display = 'block';
         }
         
-        document.getElementById('username').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') register();
-        });
-        document.getElementById('password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') register();
-        });
+        function register() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showMessage('Заполните все поля', 'error');
+                return;
+            }
+            
+            if (password.length < 4) {
+                showMessage('Пароль должен быть минимум 4 символа', 'error');
+                return;
+            }
+            
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            
+            if (users[username]) {
+                showMessage('Пользователь уже существует', 'error');
+                return;
+            }
+            
+            users[username] = password;
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            showMessage('Регистрация успешна! Перенаправление...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = '/login.html';
+            }, 1500);
+        }
     </script>
 </body>
 </html>
