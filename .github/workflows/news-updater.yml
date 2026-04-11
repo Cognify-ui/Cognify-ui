@@ -17,6 +17,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Важно! Загружаем всю историю
       
       - name: Установка Python
         uses: actions/setup-python@v5
@@ -34,6 +35,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Скачиваем последние изменения из репозитория
+          git pull --rebase origin main
+          
+          # Добавляем изменения
           git add news.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "🤖 Автообновление новостей [skip ci]"
-          git push
+          
+          # Коммитим только если есть изменения
+          if git diff --staged --quiet; then
+            echo "Нет изменений для коммита"
+          else
+            git commit -m "🤖 Автообновление новостей [skip ci]"
+            git push origin main
+          fi
