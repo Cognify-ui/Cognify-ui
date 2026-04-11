@@ -2,7 +2,7 @@ name: Автообновление новостей
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -31,23 +31,30 @@ jobs:
       - name: Запуск генератора новостей
         run: python news_generator.py
       
-      - name: Сохранение изменений
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Сохранение изменений (без конфликтов)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Проверяем, есть ли изменения
-          if git diff --quiet news.json; then
-            echo "Нет изменений в news.json"
-            exit 0
-          fi
+          # Скачиваем последние изменения
+          git fetch origin main
           
-          # Добавляем и коммитим
+          # Временно сохраняем наши изменения
+          git stash push --include-untracked -m "temp-news" || true
+          
+          # Переключаемся на последнюю версию
+          git checkout origin/main -B temp-branch
+          
+          # Возвращаем наши изменения
+          git stash pop || true
+          
+          # Добавляем изменения
           git add news.json
-          git commit -m "🤖 Автообновление новостей [skip ci]"
           
-          # Пул и пуш в одной команде
-          git pull --rebase origin main
-          git push origin main
+          # Если есть изменения - коммитим и пушим
+          if git diff --staged --quiet; then
+            echo "Нет изменений для коммита"
+          else
+            git commit -m "🤖 Автообновление новостей [skip ci]"
+            git push origin HEAD:main --force-with-lease
+          fi
