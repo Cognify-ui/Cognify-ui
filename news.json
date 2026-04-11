@@ -1,1 +1,27 @@
-
+{
+  "last_updated": "2026-04-11T14:30:00Z",
+  "articles": [
+    {
+      "id": "news-001",
+      "title": "Groq анонсировал новую модель с контекстом 1 млн токенов",
+      "summary": "Компания Groq представила LLM, способную обрабатывать роман 'Война и мир' за 2 секунды. Бесплатный доступ через API сохраняется.",
+      "content": "Полный текст новости... (здесь подробное описание, 500-1000 символов)",
+      "source": "TechCrunch",
+      "source_url": "https://techcrunch.com/...",
+      "published_at": "2026-04-11T10:15:00Z",
+      "tags": ["groq", "новости-ai", "модели"],
+      "image_url": "https://cognify-ui.github.io/images/news-001.jpg"
+    },
+    {
+      "id": "news-002",
+      "title": "Gemini получил функцию анализа видео в реальном времени",
+      "summary": "Google обновил мультимодальную модель Gemini, добавив возможность анализировать видеопоток с веб-камеры...",
+      "content": "Полный текст...",
+      "source": "Google Blog",
+      "source_url": "https://blog.google/...",
+      "published_at": "2026-04-11T08:00:00Z",
+      "tags": ["gemini", "google", "мультимодальность"],
+      "image_url": ""
+    }
+  ]
+}
