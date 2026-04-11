@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-# news_generator.py - Генератор новостей для Cognify AI
-
 import json
-import os
 import requests
 from datetime import datetime
 import hashlib
 import feedparser
+import re
 
 NEWS_FILE = "news.json"
 MAX_ARTICLES = 50
@@ -14,9 +12,29 @@ MAX_ARTICLES = 50
 RSS_SOURCES = [
     "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
     "https://huggingface.co/blog/feed.xml",
-    "https://www.technologyreview.com/feed/ai/",
     "https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml",
 ]
+
+def clean_html(text):
+    """Удаляет HTML теги"""
+    if not text:
+        return ""
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
+
+def generate_summary_from_title(title):
+    """Генерирует краткое содержание из заголовка"""
+    if not title:
+        return "Новость из мира искусственного интеллекта"
+    # Добавляем контекст к заголовку
+    return f"{title}. Подробнее в источнике."
+
+def generate_content_from_title(title, source):
+    """Генерирует контент из заголовка, если он пустой"""
+    if not title:
+        return "Читайте подробности по ссылке."
+    return f"{title}. Полная статья доступна на {source}. Следите за новостями мира AI на Cognify AI."
 
 def fetch_rss(url):
     """Получает новости из RSS"""
@@ -27,11 +45,23 @@ def fetch_rss(url):
         for entry in feed.entries[:5]:
             article_id = hashlib.md5(entry.link.encode()).hexdigest()[:12]
             
+            title = entry.get('title', '')
+            summary = clean_html(entry.get('summary', ''))
+            content = clean_html(entry.get('content', [{}])[0].get('value', '')) if entry.get('content') else summary
+            
+            # Если summary пустой, генерируем из заголовка
+            if not summary:
+                summary = generate_summary_from_title(title)
+            
+            # Если content пустой, генерируем из заголовка
+            if not content:
+                content = generate_content_from_title(title, feed.feed.get('title', 'Unknown'))
+            
             articles.append({
                 "id": article_id,
-                "title": entry.title,
-                "summary": clean_html(entry.get('summary', ''))[:300],
-                "content": clean_html(entry.get('summary', ''))[:1000],
+                "title": title[:100] if title else "AI News",
+                "summary": summary[:300],
+                "content": content[:1500],
                 "link": entry.link,
                 "published": entry.get('published', datetime.now().isoformat()),
                 "source": feed.feed.get('title', 'Unknown')
@@ -41,13 +71,6 @@ def fetch_rss(url):
     except Exception as e:
         print(f"Ошибка RSS {url}: {e}")
         return []
-
-def clean_html(text):
-    """Удаляет HTML теги"""
-    import re
-    text = re.sub(r'<[^>]+>', '', text)
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
 
 def update_news_json(new_articles):
     """Обновляет файл новостей"""
@@ -72,9 +95,9 @@ def update_news_json(new_articles):
         
         formatted = {
             "id": article['id'],
-            "title": article['title'][:100],
-            "summary": article['summary'][:250],
-            "content": article['content'][:1500] if article['content'] else article['summary'],
+            "title": article['title'],
+            "summary": article['summary'],
+            "content": article['content'],
             "source": article.get('source', 'AI News'),
             "source_url": article.get('link', ''),
             "published_at": article.get('published', datetime.now().isoformat()),
@@ -101,7 +124,8 @@ def generate_tags(title):
         'groq': 'groq', 'cerebras': 'cerebras', 'gemini': 'gemini',
         'google': 'google', 'openai': 'openai', 'chatgpt': 'chatgpt',
         'claude': 'claude', 'meta': 'meta', 'llama': 'llama',
-        'mistral': 'mistral', 'ai': 'ai', 'ml': 'ml'
+        'mistral': 'mistral', 'ai': 'ai', 'ml': 'ml',
+        'robot': 'роботы', 'chip': 'чипы', 'energy': 'энергия'
     }
     
     for key, tag in keywords.items():
@@ -138,4 +162,5 @@ def main():
     print("✅ Готово!")
 
 if __name__ == "__main__":
+    import os
     main()
