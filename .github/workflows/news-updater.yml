@@ -1,40 +1,163 @@
-name: Автообновление новостей Gemini
+name: 🤖 Автообновление новостей Cognify AI
 
 on:
   schedule:
-    - cron: '*/7 * * * *'
+    # Генерация каждый час для постоянного обновления контента (SEO эффект)
+    - cron: '0 * * * *'
+    # Дополнительная генерация в час пик
+    - cron: '30 10,15,20 * * *'
   workflow_dispatch:
+    inputs:
+      force_generate:
+        description: 'Принудительная генерация (игнорировать дубликаты)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+# Права доступа
+permissions:
+  contents: write
+  actions: read
+
+# Предотвращение параллельных запусков
+concurrency:
+  group: news-generator
+  cancel-in-progress: false
 
 jobs:
   generate-news:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    timeout-minutes: 10  # Таймаут для предотвращения зависаний
     
     steps:
-      - uses: actions/checkout@v4
+      - name: 🔄 Checkout repository
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1  # Только последний коммит для скорости
       
-      - uses: actions/setup-python@v5
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'  # Кэширование зависимостей
       
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
           pip install google-genai
+          # Проверка установки
+          python -c "import google; print('✅ Google GenAI installed')"
       
-      - name: Generate news with Gemini
+      - name: 🔍 Check existing news
+        id: check
+        run: |
+          if [ -f news.json ]; then
+            NEWS_COUNT=$(python -c "import json; f=open('news.json'); d=json.load(f); print(len(d.get('articles', [])))" 2>/dev/null || echo "0")
+            echo "📊 Existing news count: $NEWS_COUNT"
+            echo "news_count=$NEWS_COUNT" >> $GITHUB_OUTPUT
+            
+            # Проверяем время последнего обновления
+            LAST_UPDATE=$(python -c "import json; f=open('news.json'); d=json.load(f); print(d.get('last_updated', ''))" 2>/dev/null || echo "")
+            echo "🕐 Last update: $LAST_UPDATE"
+          else
+            echo "📊 No news.json found"
+            echo "news_count=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: 🚀 Generate news with Gemini
+        id: generate
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python news_generator.py
-      
-      - name: Commit and push
+          FORCE_GENERATE: ${{ github.event.inputs.force_generate || 'false' }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "🔄 Starting news generation..."
+          
+          # Запускаем генерацию с таймаутом
+          timeout 300 python news_generator.py || {
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 124 ]; then
+              echo "⚠️ Generation timeout after 5 minutes"
+            else
+              echo "❌ Generation failed with code $EXIT_CODE"
+            fi
+            exit $EXIT_CODE
+          }
+          
+          # Проверяем результат
+          if [ -f news.json ]; then
+            NEW_SIZE=$(stat -c%s news.json)
+            if [ $NEW_SIZE -lt 1000 ]; then
+              echo "⚠️ Generated file is too small ($NEW_SIZE bytes)"
+              exit 1
+            fi
+            echo "✅ News generated successfully (${NEW_SIZE} bytes)"
+          else
+            echo "❌ news.json not created"
+            exit 1
+          fi
+      
+      - name: 📊 Validate JSON
+        run: |
+          python -c "
+          import json
+          with open('news.json', 'r', encoding='utf-8') as f:
+              data = json.load(f)
+              assert 'articles' in data, 'No articles field'
+              assert isinstance(data['articles'], list), 'Articles not a list'
+              print(f'✅ JSON valid. Articles: {len(data[\"articles\"])}')
+          "
+      
+      - name: 💾 Commit and push changes
+        if: success()
+        run: |
+          # Настройка git
+          git config user.name "Cognify AI Bot"
+          git config user.email "bot@cognify.ai"
+          
+          # Проверяем изменения
+          if git diff --quiet news.json; then
+            echo "📝 No changes to commit"
+            exit 0
+          fi
+          
+          # Показываем изменения для лога
+          echo "📝 Changes detected:"
+          git diff --stat news.json
+          
+          # Добавляем файл
           git add news.json
-          git diff --staged --quiet || git commit -m "🤖 Gemini: новая AI новость [skip ci]"
-          git pull --rebase --strategy-option=theirs origin main || true
-          git push origin main
+          
+          # Создаем коммит с информативной датой
+          COMMIT_MSG="🤖 Новость добавлена: $(date '+%Y-%m-%d %H:%M:%S')"
+          git commit -m "$COMMIT_MSG [skip ci]"
+          
+          # Пытаемся пушить с повторными попытками
+          for i in {1..3}; do
+            echo "🔄 Push attempt $i/3..."
+            git pull --rebase --strategy-option=theirs origin main && git push origin main && break
+            if [ $i -eq 3 ]; then
+              echo "❌ Failed to push after 3 attempts"
+              exit 1
+            fi
+            sleep 5
+          done
+          
+          echo "✅ Changes pushed successfully"
+      
+      - name: 📨 Send notification (optional)
+        if: failure()
+        run: |
+          echo "⚠️ News generation failed!"
+          echo "Check the logs for details"
+          # Здесь можно добавить уведомление в Telegram/Slack при желании
+      
+      - name: 🧹 Cleanup
+        if: always()
+        run: |
+          # Очистка кэша pip для экономии места
+          pip cache purge 2>/dev/null || true
+          echo "🧹 Cleanup completed"
