@@ -1,33 +1,32 @@
-name: 🤖 Автообновление новостей Cognify AI
+name: News Auto Updater
 
 on:
-  schedule:
-    # 00, 10, 20, 30, 40, 50 минут каждого часа
-    - cron: '0,10,20,30,40,50 * * * *'
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  generate-news:
+  update-news:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      - run: pip install google-genai
+      - name: Install dependencies
+        run: pip install google-genai
       
-      - run: python news_generator.py
+      - name: Generate news
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python news_generator.py
       
-      - run: |
+      - name: Commit and push
+        run: |
           git config user.name "Cognify AI Bot"
           git config user.email "bot@cognify.ai"
           git add news.json news/ sitemap.xml robots.txt 2>/dev/null || true
