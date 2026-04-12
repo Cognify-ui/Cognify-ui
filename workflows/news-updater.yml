@@ -43,3 +43,4 @@ jobs:
           git add news.json news/ sitemap.xml robots.txt 2>/dev/null || true
           git diff --cached --quiet || git commit -m "🤖 Auto-update news [skip ci]"
           git push origin main
+
