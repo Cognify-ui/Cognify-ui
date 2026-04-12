@@ -1,6 +1,33 @@
 {
-  "last_updated": "2026-04-12T13:02:00.055439",
+  "last_updated": "2026-04-12T13:10:05.782125",
   "articles": [
+    {
+      "id": "9354599ac3ff",
+      "title": "Модульные GPU: Новая Эра Инноваций в AI и Цифровой Трансформации",
+      "summary": "Как сообщает CNET, индустрия графических процессоров стоит на пороге революции. Представлена уникальная модульная архитектура GPU, способная динамически переконфигурироваться под различные нейросети. Эта инновация обещает беспрецедентный прирост производительности и энергоэффективности для развития AI.",
+      "content": "Как стало известно CNET вчера, индустрия графических процессоров стоит на пороге очередной революции, способной значительно ускорить развитие AI. Источники подтверждают, что стартап SynapseDynamic, недавно перешедший под крыло одного из технологических гигантов, разработал уникальную модульную архитектуру GPU. Эта инновационная технология позволяет графическим процессорам динамически переконфигурировать свои вычислительные блоки в зависимости от типа и требований запущенной нейросети, что радикально отличается от фиксированных архитектур современных GPU.\n\nПредставьте себе GPU, который может «менять форму» своих внутренних компонентов, чтобы максимально эффективно обрабатывать как сверточные сети для компьютерного зрения, так и трансформеры для обработки естественного языка, минимизируя при этом энергопотребление. Эксперты называют это крупнейшей инновацией в аппаратном обеспечении за последнее десятилетие, обещая беспрецедентный прирост производительности и энергоэффективности для самых сложных задач машинного обучения.\n\nЭтот прорыв открывает новые горизонты для цифровой трансформации в самых разных отраслях — от здравоохранения и автономного транспорта до финансового анализа. Компании смогут быстрее и экономичнее обучать огромные нейросети, внедрять более сложные модели AI на периферии сети и получать глубокие аналитические данные в реальном времени.\n\nСогласно аналитикам CNET, появление таких адаптивных GPU не только снизит капитальные и операционные расходы на развертывание AI-решений, но и послужит катализатором для появления совершенно новых категорий AI-приложений, которые ранее были невозможны из-за аппаратных ограничений. Это настоящий квантовый скачок в способности оборудования поддерживать стремительно развивающиеся алгоритмы нейросетей, подтверждающий, что эра глубоких инноваций в вычислениях только начинается.",
+      "source": "CNET",
+      "source_url": "https://cognify-ui.github.io/news/9354599ac3ff",
+      "published_at": "2026-04-12T13:10:05.782108",
+      "tags": [
+        "gpu",
+        "AI",
+        "инновации",
+        "нейросети",
+        "цифровая_трансформация"
+      ],
+      "seo_topic": "gpu",
+      "used_model": "gemini-2.5-flash",
+      "image_url": "https://api.dicebear.com/7.x/bottts/svg?seed=93a7a928e9&backgroundColor=6366f1&radius=50",
+      "seo_metadata": {
+        "meta_title": "Модульные GPU: Новая Эра Инноваций в AI и Цифровой Трансформации | Cognify AI News",
+        "meta_description": "Как сообщает CNET, индустрия графических процессоров стоит на пороге революции. Представлена уникальная модульная архитектура GPU, способная динамически перекон",
+        "meta_keywords": "gpu, AI, инновации, нейросети, цифровая_трансформация, gpu",
+        "og_title": "Модульные GPU: Новая Эра Инноваций в AI и Цифровой Трансформации",
+        "og_description": "Как сообщает CNET, индустрия графических процессоров стоит на пороге революции. Представлена уникальная модульная архитектура GPU, способная динамически переконфигурироваться под различные нейросети. ",
+        "twitter_card": "summary_large_image"
+      }
+    },
     {
       "id": "36109dd55ed9",
       "title": "NVIDIA H100 меняет ландшафт: Гигант Big Tech пересматривает стратегии AI и машинного обучения",
@@ -674,18 +701,6 @@
       "tags": [
         "ai",
         "news"
-      ]
-    },
-    {
-      "id": "c2e433d6dc00",
-      "title": "The creator of Claude Code just revealed his workflow, and developers are losing their minds",
-      "summary": "When the creator of the world&#x27;s most advanced coding agent speaks, Silicon Valley doesn&#x27;t just listen — it takes notes.For the past week, the engineering community has been dissecting a thread on X from Boris Cherny, the creator and head of Claude Code at Anthropic. What began as a casual sharing of his personal terminal setup has spirale",
-      "content": "When the creator of the world&#x27;s most advanced coding agent speaks, Silicon Valley doesn&#x27;t just listen — it takes notes.For the past week, the engineering community has been dissecting a thread on X from Boris Cherny, the creator and head of Claude Code at Anthropic. What began as a casual sharing of his personal terminal setup has spiraled into a viral manifesto on the future of software development, with industry insiders calling it a watershed moment for the startup.&quot;If you&#x27;re not reading the Claude Code best practices straight from its creator, you&#x27;re behind as a programmer,&quot; wrote Jeff Tang, a prominent voice in the developer community. Kyle McNease, another industry observer, went further, declaring that with Cherny&#x27;s &quot;game-changing updates,&quot; Anthropic is &quot;on fire,&quot; potentially facing &quot;their ChatGPT moment.&quot;The excitement stems from a paradox: Cherny&#x27;s workflow is surprisingly simple, yet it allows a single human to operate with the output capacity of a small engineering department. As one user noted on X after implementing Cherny&#x27;s setup, the experience &quot;feels more like Starcraft&quot; than traditional coding — a shift from typing syntax to commanding autonomous units.Here is an analysis of the workflow that is reshaping how software gets built, straight from the architect himself. How running five AI agents at once turns coding into a real-time strategy gameThe most striking revelation from Cherny&#x27;s disclosure is that he does not code in a linear fashion. In the traditional &quot;inner loop&quot; of development, a programmer writes a function, tests it, and moves to the next. Cherny, however, acts as a fleet commander.&quot;I run 5 Claudes in parallel in my terminal,&quot; Cherny wrote. &quot;I number my tabs 1-5, and use system notifications to know when a Claude needs input.&quot;By utilizing iTerm2 system notifications, Cherny effectively manages five simultaneous work str",
-      "source": "AI | VentureBeat",
-      "source_url": "https://venturebeat.com/technology/the-creator-of-claude-code-just-revealed-his-workflow-and-developers-are",
-      "published_at": "Mon, 05 Jan 2026 07:45:00 GMT",
-      "tags": [
-        "claude"
       ]
     }
   ],
