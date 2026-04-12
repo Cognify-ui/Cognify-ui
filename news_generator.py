@@ -5,14 +5,18 @@ from datetime import datetime
 import hashlib
 import feedparser
 import re
+import os
+import time
 
 NEWS_FILE = "news.json"
 MAX_ARTICLES = 50
 
+# Проверенные рабочие RSS-источники
 RSS_SOURCES = [
     "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
-    "https://huggingface.co/blog/feed.xml",
     "https://www.sciencedaily.com/rss/computers_math/artificial_intelligence.xml",
+    "https://venturebeat.com/category/ai/feed/",
+    "https://towardsdatascience.com/feed/tagged/ai"
 ]
 
 def clean_html(text):
@@ -27,7 +31,6 @@ def generate_summary_from_title(title):
     """Генерирует краткое содержание из заголовка"""
     if not title:
         return "Новость из мира искусственного интеллекта"
-    # Добавляем контекст к заголовку
     return f"{title}. Подробнее в источнике."
 
 def generate_content_from_title(title, source):
@@ -37,40 +40,74 @@ def generate_content_from_title(title, source):
     return f"{title}. Полная статья доступна на {source}. Следите за новостями мира AI на Cognify AI."
 
 def fetch_rss(url):
-    """Получает новости из RSS"""
-    try:
-        feed = feedparser.parse(url)
-        articles = []
-        
-        for entry in feed.entries[:5]:
-            article_id = hashlib.md5(entry.link.encode()).hexdigest()[:12]
+    """Получает новости из RSS с повторными попытками"""
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            # Добавляем User-Agent, чтобы не блокировали
+            feedparser.USER_AGENT = "Mozilla/5.0 (compatible; CognifyBot/1.0)"
+            feed = feedparser.parse(url)
             
-            title = entry.get('title', '')
-            summary = clean_html(entry.get('summary', ''))
-            content = clean_html(entry.get('content', [{}])[0].get('value', '')) if entry.get('content') else summary
+            # Проверяем на ошибки парсинга
+            if feed.bozo:
+                print(f"   ⚠️ Предупреждение парсинга: {feed.bozo_exception}")
             
-            # Если summary пустой, генерируем из заголовка
-            if not summary:
-                summary = generate_summary_from_title(title)
+            if not feed.entries:
+                print(f"   ⚠️ Нет записей в {url}")
+                return []
             
-            # Если content пустой, генерируем из заголовка
-            if not content:
-                content = generate_content_from_title(title, feed.feed.get('title', 'Unknown'))
+            articles = []
+            for entry in feed.entries[:5]:
+                # Генерируем ID из ссылки
+                link = entry.get('link', '')
+                if not link:
+                    continue
+                    
+                article_id = hashlib.md5(link.encode()).hexdigest()[:12]
+                
+                title = clean_html(entry.get('title', ''))
+                if not title:
+                    title = "AI Новость"
+                
+                # Пробуем получить summary
+                summary = clean_html(entry.get('summary', ''))
+                if not summary:
+                    summary = clean_html(entry.get('description', ''))
+                
+                # Пробуем получить content
+                content = ""
+                if entry.get('content'):
+                    content = clean_html(entry['content'][0].get('value', ''))
+                if not content and summary:
+                    content = summary
+                
+                # Если всё пустое - генерируем
+                if not summary:
+                    summary = generate_summary_from_title(title)
+                if not content:
+                    content = generate_content_from_title(title, feed.feed.get('title', 'Unknown'))
+                
+                # Форматируем дату
+                pub_date = entry.get('published', entry.get('updated', datetime.now().isoformat()))
+                
+                articles.append({
+                    "id": article_id,
+                    "title": title[:100],
+                    "summary": summary[:300],
+                    "content": content[:1500],
+                    "link": link,
+                    "published": pub_date,
+                    "source": feed.feed.get('title', url.split('/')[2])
+                })
             
-            articles.append({
-                "id": article_id,
-                "title": title[:100] if title else "AI News",
-                "summary": summary[:300],
-                "content": content[:1500],
-                "link": entry.link,
-                "published": entry.get('published', datetime.now().isoformat()),
-                "source": feed.feed.get('title', 'Unknown')
-            })
-        
-        return articles
-    except Exception as e:
-        print(f"Ошибка RSS {url}: {e}")
-        return []
+            return articles
+            
+        except Exception as e:
+            print(f"   ❌ Ошибка (попытка {attempt+1}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+            else:
+                return []
 
 def update_news_json(new_articles):
     """Обновляет файл новостей"""
@@ -84,13 +121,10 @@ def update_news_json(new_articles):
             pass
     
     existing_ids = {a.get('id') for a in existing.get('articles', [])}
-    existing_links = {a.get('source_url') for a in existing.get('articles', []) if a.get('source_url')}
     
     new_count = 0
     for article in new_articles:
         if article['id'] in existing_ids:
-            continue
-        if article['link'] in existing_links:
             continue
         
         formatted = {
@@ -107,6 +141,7 @@ def update_news_json(new_articles):
         existing['articles'].insert(0, formatted)
         new_count += 1
     
+    # Ограничиваем количество и сортируем по дате
     existing['articles'] = existing['articles'][:MAX_ARTICLES]
     existing['last_updated'] = datetime.now().isoformat()
     
@@ -123,9 +158,9 @@ def generate_tags(title):
     keywords = {
         'groq': 'groq', 'cerebras': 'cerebras', 'gemini': 'gemini',
         'google': 'google', 'openai': 'openai', 'chatgpt': 'chatgpt',
-        'claude': 'claude', 'meta': 'meta', 'llama': 'llama',
-        'mistral': 'mistral', 'ai': 'ai', 'ml': 'ml',
-        'robot': 'роботы', 'chip': 'чипы', 'energy': 'энергия'
+        'gpt': 'gpt', 'claude': 'claude', 'meta': 'meta', 
+        'llama': 'llama', 'mistral': 'mistral', 'ai': 'ai',
+        'ml': 'ml', 'robot': 'роботы', 'нейросеть': 'нейросети'
     }
     
     for key, tag in keywords.items():
@@ -142,12 +177,14 @@ def main():
     all_articles = []
     
     for url in RSS_SOURCES:
-        print(f"📥 Парсинг: {url.split('/')[2]}...")
+        source_name = url.split('/')[2]
+        print(f"📥 Парсинг: {source_name}...")
         articles = fetch_rss(url)
         print(f"   ✅ {len(articles)} новостей")
         all_articles.extend(articles)
+        time.sleep(1)  # Пауза между запросами
     
-    # Удаляем дубликаты
+    # Удаляем дубликаты по ссылке
     unique = []
     seen_links = set()
     for a in all_articles:
@@ -157,10 +194,18 @@ def main():
     
     print(f"📊 Уникальных: {len(unique)}")
     
-    new_count = update_news_json(unique)
-    print(f"✨ Добавлено новых: {new_count}")
+    if unique:
+        new_count = update_news_json(unique)
+        print(f"✨ Добавлено новых: {new_count}")
+        print(f"📄 Всего в файле: {len(json.load(open(NEWS_FILE))['articles'])}")
+    else:
+        print("⚠️ Не найдено новых статей")
+        # Создаём пустой файл, если его нет
+        if not os.path.exists(NEWS_FILE):
+            with open(NEWS_FILE, 'w', encoding='utf-8') as f:
+                json.dump({"last_updated": datetime.now().isoformat(), "articles": []}, f)
+    
     print("✅ Готово!")
 
 if __name__ == "__main__":
-    import os
     main()
