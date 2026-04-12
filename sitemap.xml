@@ -7,6 +7,12 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://cognify-ui.github.io/news/7e52b9be15f9.html</loc>
+    <lastmod>2026-04-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://cognify-ui.github.io/news/7495ca5a066f.html</loc>
     <lastmod>2026-04-12</lastmod>
     <changefreq>weekly</changefreq>
@@ -117,12 +123,6 @@
   <url>
     <loc>https://cognify-ui.github.io/news/36a2eccf90d1.html</loc>
     <lastmod>Wed, 08 Ap</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://cognify-ui.github.io/news/0ef155259089.html</loc>
-    <lastmod>Wed, 04 Ma</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
