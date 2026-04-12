@@ -4,7 +4,7 @@ import os
 import hashlib
 import re
 from datetime import datetime
-import google.generativeai as genai
+from google import genai  # Новый пакет
 
 NEWS_FILE = "news.json"
 MAX_ARTICLES = 50
@@ -17,12 +17,11 @@ if not GEMINI_API_KEY:
 
 print(f"✅ API ключ найден: {GEMINI_API_KEY[:10]}...")
 
-# Используем доступную модель
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-1.5-pro')  # ✅ Изменено!
+# Используем новый клиент
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 def generate_news():
-    """Генерирует одну новость с помощью Gemini"""
+    """Генерирует одну новость с помощью Gemini (новый пакет)"""
     prompt = """
 Ты — журналист AI новостей. Сгенерируй ОДНУ свежую новость из мира искусственного интеллекта.
 
@@ -42,17 +41,22 @@ def generate_news():
 }
 """
     try:
-        print("🧠 Запрос к Gemini...")
-        response = model.generate_content(prompt)
+        print("🧠 Запрос к Gemini (новый API)...")
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-exp",  # Новая модель
+            contents=prompt
+        )
+        
+        text = response.text
         
         # Ищем JSON в ответе
-        json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+        json_match = re.search(r'\{.*\}', text, re.DOTALL)
         if json_match:
             article = json.loads(json_match.group())
             print(f"✅ Получена новость: {article.get('title', 'Без заголовка')[:50]}...")
             return article
         else:
-            print(f"⚠️ Не найден JSON. Ответ: {response.text[:200]}")
+            print(f"⚠️ Не найден JSON. Ответ: {text[:200]}")
             return None
     except Exception as e:
         print(f"❌ Ошибка Gemini: {e}")
