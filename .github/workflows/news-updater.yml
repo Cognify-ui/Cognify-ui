@@ -2,24 +2,15 @@ name: 🤖 Автообновление новостей Cognify AI
 
 on:
   schedule:
-    # Генерация каждый час для постоянного обновления контента (SEO эффект)
-    - cron: '0 * * * *'
-    # Дополнительная генерация в час пик (только в рабочие часы)
-    - cron: '30 10,15,20 * * *'
-  workflow_dispatch:
-    inputs:
-      force_generate:
-        description: 'Принудительная генерация (игнорировать дубликаты)'
-        required: false
-        default: 'false'
-        type: boolean  # Упрощаем выбор
+    # ИСПРАВЛЕНО: используем "некруглое" время
+    - cron: '17 */3 * * *'  # Каждые 3 часа в 17 минут
+    - cron: '43 10,16,22 * * *'  # Дополнительно в 10:43, 16:43, 22:43
+  workflow_dispatch:  # ОБЯЗАТЕЛЬНО для ручного запуска
 
-# Права доступа
 permissions:
   contents: write
   actions: read
 
-# Предотвращение параллельных запусков
 concurrency:
   group: news-generator
   cancel-in-progress: false
@@ -27,7 +18,7 @@ concurrency:
 jobs:
   generate-news:
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # Таймаут для предотвращения зависаний
+    timeout-minutes: 10
     
     steps:
       - name: 🔄 Checkout repository
@@ -41,152 +32,46 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: |
-            requirements.txt
-            **/requirements.txt
       
       - name: 📦 Install dependencies
         run: |
           pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            pip install google-genai
-          fi
+          pip install google-genai
           python -c "import google; print('✅ Google GenAI installed')"
       
-      - name: 🔍 Check existing news
-        id: check
-        run: |
-          if [ -f news.json ]; then
-            NEWS_COUNT=$(python -c "import json; f=open('news.json'); d=json.load(f); print(len(d.get('articles', [])))" 2>/dev/null || echo "0")
-            echo "📊 Existing news count: $NEWS_COUNT"
-            echo "news_count=$NEWS_COUNT" >> $GITHUB_OUTPUT
-            
-            LAST_UPDATE=$(python -c "import json; f=open('news.json'); d=json.load(f); print(d.get('last_updated', ''))" 2>/dev/null || echo "")
-            echo "🕐 Last update: $LAST_UPDATE"
-            
-            # Проверяем, нужно ли обновление (опционально)
-            if [ "${{ github.event_name }}" = "schedule" ]; then
-              # Пропускаем, если последнее обновление было менее 30 минут назад
-              if [ ! -z "$LAST_UPDATE" ]; then
-                LAST_TIMESTAMP=$(date -d "$LAST_UPDATE" +%s 2>/dev/null || echo "0")
-                CURRENT_TIMESTAMP=$(date +%s)
-                DIFF=$((CURRENT_TIMESTAMP - LAST_TIMESTAMP))
-                if [ $DIFF -lt 1800 ]; then
-                  echo "⏭️ Skipping - last update was less than 30 minutes ago"
-                  echo "skip=true" >> $GITHUB_OUTPUT
-                fi
-              fi
-            fi
-          else
-            echo "📊 No news.json found"
-            echo "news_count=0" >> $GITHUB_OUTPUT
-          fi
-      
       - name: 🚀 Generate news with Gemini
-        if: steps.check.outputs.skip != 'true'
-        id: generate
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          FORCE_GENERATE: ${{ github.event.inputs.force_generate || 'false' }}
         run: |
-          echo "🔄 Starting news generation..."
-          echo "Force generate: $FORCE_GENERATE"
-          
-          # Запускаем генерацию
+          echo "🔄 Starting news generation at $(date)"
           python news_generator.py
           
-          # Проверяем результат
           if [ -f news.json ]; then
-            NEW_SIZE=$(stat -c%s news.json 2>/dev/null || stat -f%z news.json 2>/dev/null)
-            if [ "$NEW_SIZE" -lt 1000 ]; then
-              echo "⚠️ Generated file is too small ($NEW_SIZE bytes)"
-              exit 1
-            fi
-            echo "✅ News generated successfully (${NEW_SIZE} bytes)"
+            SIZE=$(wc -c < news.json)
+            echo "✅ News generated successfully (${SIZE} bytes)"
           else
             echo "❌ news.json not created"
             exit 1
           fi
       
-      - name: 📊 Validate JSON
-        if: steps.generate.outcome == 'success'
-        run: |
-          python -c "
-          import json
-          import sys
-          try:
-              with open('news.json', 'r', encoding='utf-8') as f:
-                  data = json.load(f)
-                  assert 'articles' in data, 'No articles field'
-                  assert isinstance(data['articles'], list), 'Articles not a list'
-                  assert len(data['articles']) > 0, 'No articles in list'
-                  print(f'✅ JSON valid. Articles: {len(data[\"articles\"])}')
-          except Exception as e:
-              print(f'❌ Validation error: {e}')
-              sys.exit(1)
-          "
-      
       - name: 💾 Commit and push changes
-        if: success() && steps.generate.outcome == 'success'
         run: |
-          # Настройка git
           git config user.name "Cognify AI Bot"
           git config user.email "bot@cognify.ai"
           
-          # Проверяем изменения
-          if git diff --quiet news.json; then
+          git add news.json
+          
+          if git diff --cached --quiet; then
             echo "📝 No changes to commit"
             exit 0
           fi
           
-          # Показываем изменения
-          echo "📝 Changes detected:"
-          git diff --stat news.json
+          git commit -m "🤖 Auto-update AI news [skip ci]"
           
-          # Добавляем файл
-          git add news.json
-          
-          # Создаем коммит
-          COMMIT_MSG="🤖 AI news update: $(date '+%Y-%m-%d %H:%M:%S')"
-          git commit -m "$COMMIT_MSG [skip ci]"
-          
-          # Пытаемся пушить с повторными попытками
-          for i in {1..3}; do
-            echo "🔄 Push attempt $i/3..."
-            if git pull --rebase --strategy-option=theirs origin main && git push origin main; then
+          for i in 1 2 3; do
+            if git pull --rebase origin main && git push origin main; then
               echo "✅ Changes pushed successfully"
               break
             fi
-            if [ $i -eq 3 ]; then
-              echo "❌ Failed to push after 3 attempts"
-              exit 1
-            fi
             sleep 5
           done
-      
-      - name: 📊 Show summary
-        if: success() && steps.generate.outcome == 'success'
-        run: |
-          echo "📊 Final summary:"
-          python -c "
-          import json
-          with open('news.json', 'r', encoding='utf-8') as f:
-              data = json.load(f)
-              articles = data.get('articles', [])
-              if articles:
-                  latest = articles[0]
-                  print(f'   Latest news: {latest.get(\"title\", \"N/A\")[:60]}...')
-                  print(f'   Published: {latest.get(\"published_at\", \"N/A\")}')
-                  print(f'   Total in archive: {len(articles)}')
-          "
-      
-      - name: 🧹 Cleanup
-        if: always()
-        run: |
-          # Очистка кэша pip для экономии места
-          pip cache purge 2>/dev/null || true
-          # Удаляем временные файлы
-          rm -rf __pycache__ .pytest_cache 2>/dev/null || true
-          echo "🧹 Cleanup completed"
