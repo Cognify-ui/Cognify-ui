@@ -1356,56 +1356,60 @@
         }
     }
 
-    function renderNewsList() {
-        const newsListDiv = document.getElementById('newsList');
-        if (allNews.length === 0) {
-            newsListDiv.innerHTML = `<div class="news-empty">${t('no_news')}</div>`;
-            return;
-        }
-        allNews.forEach(article => {
-            incrementView(article.id);
-            setTimeout(() => updateNewsStatsDisplay(article.id), 100);
-        });
-        newsListDiv.innerHTML = allNews.map(article => `
-            <div class="news-card" data-id="${article.id}">
-                <h3 onclick="showFullArticle('${article.id}')">${escapeHtml(article.title)}</h3>
-                <div class="news-meta">
-                    <span>📅 ${article.published_at || t('unknown_date')}</span>
-                    <span>🔗 ${escapeHtml(article.source || 'AI News')}</span>
-                    <span class="view-count">👁️ <span id="views-${article.id}">${formatNumber(newsStats[article.id]?.views || 0)}</span> ${t('view')}</span>
+	function renderNewsList() {
+    const newsListDiv = document.getElementById('newsList');
+    if (allNews.length === 0) {
+        newsListDiv.innerHTML = `<div class="news-empty">${t('no_news')}</div>`;
+        return;
+    }
+    
+    allNews.forEach(article => {
+        incrementView(article.id);
+        setTimeout(() => updateNewsStatsDisplay(article.id), 100);
+    });
+    
+    newsListDiv.innerHTML = allNews.map(article => `
+        <div class="news-card" data-id="${article.id}">
+            ${article.image_url ? `<img class="news-image" src="${article.image_url}" alt="${escapeHtml(article.title)}" onerror="this.src='https://source.unsplash.com/800x400/?ai,technology'">` : ''}
+            <h3 onclick="showFullArticle('${article.id}')">${escapeHtml(article.title)}</h3>
+            <div class="news-meta">
+                <span>📅 ${article.published_at ? formatDate(article.published_at) : t('unknown_date')}</span>
+                <span>🔗 ${escapeHtml(article.source || 'AI News')}</span>
+                <span class="view-count">👁️ <span id="views-${article.id}">${formatNumber(newsStats[article.id]?.views || 0)}</span> ${t('view')}</span>
+            </div>
+            <div class="news-summary" onclick="showFullArticle('${article.id}')">
+                ${escapeHtml((article.summary || article.content || '').substring(0, 200))}...
+            </div>
+            <div class="news-stats">
+                <div class="news-stat ${localStorage.getItem(`liked_${article.id}`) === 'true' ? 'liked' : ''}" onclick="likeArticle('${article.id}', this)">
+                    <span class="stat-icon">❤️</span> <span id="likes-${article.id}">${formatNumber(newsStats[article.id]?.likes || 0)}</span>
                 </div>
-                <div class="news-summary" onclick="showFullArticle('${article.id}')">
-                    ${escapeHtml((article.summary || article.content || '').substring(0, 200))}...
+                <div class="news-stat" onclick="toggleComments('${article.id}')">
+                    <span class="stat-icon">💬</span> <span>${newsComments[article.id]?.length || 0}</span>
                 </div>
-                <div class="news-stats">
-                    <div class="news-stat ${localStorage.getItem(`liked_${article.id}`) === 'true' ? 'liked' : ''}" onclick="likeArticle('${article.id}', this)">
-                        <span class="stat-icon">❤️</span> <span id="likes-${article.id}">${formatNumber(newsStats[article.id]?.likes || 0)}</span>
-                    </div>
-                    <div class="news-stat" onclick="toggleComments('${article.id}')">
-                        <span class="stat-icon">💬</span> <span>${newsComments[article.id]?.length || 0}</span>
-                    </div>
-                    <div class="news-stat" onclick="shareNews('${article.id}', 'telegram')">
-                        <span class="stat-icon">📤</span> <span>${t('share')}</span>
-                    </div>
-                </div>
-                <div class="comments-section" id="comments-${article.id}">
-                    <div class="comment-input">
-                        <input type="text" id="comment-input-${article.id}" placeholder="${t('write_comment')}">
-                        <button onclick="addComment('${article.id}')">${t('send_comment')}</button>
-                    </div>
-                    <div id="comments-list-${article.id}"></div>
-                </div>
-                <div class="news-tags">${(article.tags || []).map(tag => `<span class="news-tag">#${escapeHtml(tag)}</span>`).join('')}</div>
-                <div class="share-buttons">
-                    <button class="share-btn" onclick="shareNews('${article.id}', 'telegram')">📱 Telegram</button>
-                    <button class="share-btn" onclick="shareNews('${article.id}', 'whatsapp')">💬 WhatsApp</button>
-                    <button class="share-btn" onclick="shareNews('${article.id}', 'vk')">📘 VK</button>
-                    <button class="share-btn" onclick="shareNews('${article.id}', 'twitter')">🐦 Twitter</button>
+                <div class="news-stat" onclick="shareNews('${article.id}', 'telegram')">
+                    <span class="stat-icon">📤</span> <span>${t('share')}</span>
                 </div>
             </div>
-        `).join('');
-    }
-
+            <div class="comments-section" id="comments-${article.id}">
+                <div class="comment-input">
+                    <input type="text" id="comment-input-${article.id}" placeholder="${t('write_comment')}">
+                    <button onclick="addComment('${article.id}')">${t('send_comment')}</button>
+                </div>
+                <div id="comments-list-${article.id}"></div>
+            </div>
+            <div class="news-tags">
+                ${(article.tags || []).map(tag => `<span class="news-tag">#${escapeHtml(tag)}</span>`).join('')}
+            </div>
+            <div class="share-buttons">
+                <button class="share-btn" onclick="shareNews('${article.id}', 'telegram')">📱 Telegram</button>
+                <button class="share-btn" onclick="shareNews('${article.id}', 'whatsapp')">💬 WhatsApp</button>
+                <button class="share-btn" onclick="shareNews('${article.id}', 'vk')">📘 VK</button>
+                <button class="share-btn" onclick="shareNews('${article.id}', 'twitter')">🐦 Twitter</button>
+            </div>
+        </div>
+    `).join('');
+}
     function showFullArticle(articleId) {
         const article = allNews.find(a => a.id === articleId);
         if (!article) return;
