@@ -2,7 +2,8 @@ name: 🤖 Автообновление новостей Cognify AI
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    # 00, 10, 20, 30, 40, 50 минут каждого часа
+    - cron: '0,10,20,30,40,50 * * * *'
   workflow_dispatch:
 
 permissions:
