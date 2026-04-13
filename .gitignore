@@ -1,5 +1,32 @@
-__pycache__/
-*.pyc
-.env
+# OS files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+venv/
+
+# Logs & temp
 *.log
+*.tmp
+*.temp
+
+# Local config
+config.local.js
+secret.js
+
+# Build files
+dist/
+build/
