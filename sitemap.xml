@@ -2,9 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://cognify-ui.github.io/</loc>
-    <lastmod>2026-04-12</lastmod>
+    <lastmod>2026-04-13</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://cognify-ui.github.io/news/16e3805f8796.html</loc>
+    <lastmod>2026-04-13</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://cognify-ui.github.io/news/9b2ef087ad3f.html</loc>
@@ -116,12 +122,6 @@
   </url>
   <url>
     <loc>https://cognify-ui.github.io/news/1e62233a5f0a.html</loc>
-    <lastmod>2026-04-12</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://cognify-ui.github.io/news/1297a7d4d83c.html</loc>
     <lastmod>2026-04-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
