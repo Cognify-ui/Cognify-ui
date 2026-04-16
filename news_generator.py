@@ -77,7 +77,7 @@ def extract_real_link(item, source_name):
         guid_text = guid.get_text(strip=True)
         if guid_text and guid_text.startswith('http') and 'habr.com' in guid_text:
             return guid_text
-        if guid_text and guid_text.startswith('http') and not guid_text.endswith(('.jpg', '.png', '.gif', '.jpeg')):
+        if guid_text and guid_text.startswith('http') and not guid_text.lower().endswith(('.jpg', '.png', '.gif', '.jpeg')):
             return guid_text
     
     # 2. Пробуем link
@@ -85,7 +85,6 @@ def extract_real_link(item, source_name):
     if link_elem:
         link_text = link_elem.get_text(strip=True)
         if link_text and link_text.startswith('http'):
-            # Проверяем, что это не ссылка на картинку
             if not link_text.lower().endswith(('.jpg', '.png', '.gif', '.jpeg', '.webp')):
                 return link_text
         if link_elem.get('href'):
@@ -180,12 +179,12 @@ def fetch_rss_feed(url, source_name):
                 "title": title,
                 "summary": summary,
                 "content": full_content,
-                "link": link,  # Теперь это реальная ссылка на статью!
+                "link": link,
                 "source": source_name,
                 "published_at": pub_date,
                 "tags": ["AI", "технологии", "IT"],
-                "images": images,  # Только уникальные изображения, без дублей
-                "preview_image": preview_image,  # Только одно изображение для превью
+                "images": images,
+                "preview_image": preview_image,
             })
             
             print(f"     ✅ {title[:40]}... → {link[:50]}...")
@@ -218,7 +217,7 @@ def fetch_all_news():
     print("=" * 50)
     print(f"📊 Итого: {len(result)} уникальных новостей")
     
-    with_links = sum(1 for a in result if a.get('link') and not a['link'].endswith(('.jpg', '.png', '.gif')))
+    with_links = sum(1 for a in result if a.get('link') and not a['link'].lower().endswith(('.jpg', '.png', '.gif')))
     print(f"🔗 Новостей со ссылками на статьи: {with_links}")
     
     return result
@@ -257,6 +256,20 @@ def main():
             print()
     else:
         print("\n⚠️ Не удалось загрузить новости")
+        # Создаём демо-новости
+        demo_news = [{
+            "id": hashlib.md5("demo".encode()).hexdigest()[:16],
+            "title": "Добро пожаловать в Cognify AI News!",
+            "summary": "Новости загружаются из RSS-лент. Проверьте подключение к интернету.",
+            "content": "Если вы видите это сообщение, значит не удалось загрузить новости из RSS-лент. Проверьте подключение или попробуйте позже.",
+            "link": "https://cognify-ui.github.io",
+            "source": "Cognify AI",
+            "published_at": datetime.now().isoformat(),
+            "tags": ["info"],
+            "images": [],
+            "preview_image": None,
+        }]
+        save_news(demo_news)
 
-if __name__ "__main__":
+if __name__ == "__main__":
     main()
