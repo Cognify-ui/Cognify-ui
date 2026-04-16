@@ -2,5 +2,5 @@ google-genai>=0.2.0
 requests
 beautifulsoup4
 feedparser>=6.0.10
-
+lxml>=4.9.0
 
