@@ -539,17 +539,16 @@
         if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark');
     }
     
-    function addPromptExamples() {
-        const inputArea = document.querySelector('.input-area');
-        if (document.querySelector('.prompt-examples')) return;
-        const examplesDiv = document.createElement('div');
-        examplesDiv.className = 'prompt-examples';
-        examplesDiv.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; padding: 0 24px 12px;';
-        examplesDiv.innerHTML = `<div class="prompt-chip" data-prompt="Напиши код на Python для сортировки массива">💻 Код</div><div class="prompt-chip" data-prompt="Объясни квантовую физику простыми словами">🔬 Наука</div><div class="prompt-chip" data-prompt="Придумай креативный бизнес-план">💡 Бизнес</div><div class="prompt-chip" data-prompt="Переведи на английский: Привет, как дела?">🌐 Перевод</div>`;
-        inputArea.parentNode.insertBefore(examplesDiv, inputArea);
-        document.querySelectorAll('.prompt-chip').forEach(chip => { chip.onclick = () => { document.getElementById('userInput').value = chip.dataset.prompt; sendMessage(); }; });
-    }
-    
+	function addPromptExamples() {
+		const inputArea = document.querySelector('.input-area');
+		if (document.querySelector('.prompt-examples')) return;
+		const examplesDiv = document.createElement('div');
+		examplesDiv.className = 'prompt-examples';
+		examplesDiv.style.cssText = 'display: flex; gap: 8px; flex-wrap: wrap; padding: 0 24px 12px; justify-content: center;';
+		examplesDiv.innerHTML = `<a href="https://cognify-ui.github.io/ai-prompt-generator" target="_blank" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s;">🎯 500+ готовых промтов для нейросетей →</a>`;
+		inputArea.parentNode.insertBefore(examplesDiv, inputArea);
+	}    
+	
     document.getElementById('sendBtn').addEventListener('click', sendMessage);
     document.getElementById('newChatBtn').addEventListener('click', createNewChat);
     document.getElementById('newsTabBtn').addEventListener('click', window.showNewsTab);
